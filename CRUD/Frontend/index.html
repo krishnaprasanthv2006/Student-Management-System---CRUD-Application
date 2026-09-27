@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management System</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .form-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            padding: 10px;
+            flex: 1;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .add-btn {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .edit-btn {
+            background-color: #ffc107;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #333;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Student Management System</h1>
+
+    <!-- Form to add students -->
+    <div class="form-container">
+        <input type="text" id="name" placeholder="Student Name">
+        <input type="email" id="email" placeholder="Email">
+        <input type="text" id="course" placeholder="Course">
+
+        <button class="add-btn" onclick="addStudent()">
+            Add Student
+        </button>
+    </div>
+
+    <!-- Student table -->
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Course</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+
+        <tbody id="studentTable">
+        </tbody>
+
+    </table>
+
+</div>
+
+<script>
+
+const API_URL = "http://localhost:8080/students";
+
+
+// READ - Load students from MySQL
+function loadStudents() {
+
+    fetch(API_URL)
+        .then(response => response.json())
+        .then(students => {
+
+            let table = document.getElementById("studentTable");
+
+            table.innerHTML = "";
+
+            students.forEach(student => {
+
+                table.innerHTML += `
+                    <tr>
+                        <td>${student.id}</td>
+                        <td>${student.name}</td>
+                        <td>${student.email}</td>
+                        <td>${student.course}</td>
+
+                        <td>
+                            <button class="edit-btn"
+                                onclick="editStudent(${student.id})">
+                                Edit
+                            </button>
+
+                            <button class="delete-btn"
+                                onclick="deleteStudent(${student.id})">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        });
+}
+
+
+// CREATE - Add student to MySQL
+function addStudent() {
+
+    let name = document.getElementById("name").value;
+    let email = document.getElementById("email").value;
+    let course = document.getElementById("course").value;
+
+    if (name === "" || email === "" || course === "") {
+        alert("Please fill all fields");
+        return;
+    }
+
+    let student = {
+        name: name,
+        email: email,
+        course: course
+    };
+
+    fetch(API_URL, {
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(student)
+    })
+    .then(response => response.json())
+    .then(() => {
+
+        clearForm();
+        loadStudents();
+
+    });
+}
+
+
+// DELETE
+function deleteStudent(id) {
+
+    fetch(API_URL + "/" + id, {
+        method: "DELETE"
+    })
+    .then(() => {
+        loadStudents();
+    });
+}
+
+
+// UPDATE
+function editStudent(id) {
+
+    let name = prompt("Enter new name:");
+    let email = prompt("Enter new email:");
+    let course = prompt("Enter new course:");
+
+    if (!name || !email || !course) {
+        return;
+    }
+
+    let student = {
+        name: name,
+        email: email,
+        course: course
+    };
+
+    fetch(API_URL + "/" + id, {
+
+        method: "PUT",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(student)
+
+    })
+    .then(response => response.json())
+    .then(() => {
+        loadStudents();
+    });
+}
+
+
+// Clear input boxes
+function clearForm() {
+
+    document.getElementById("name").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("course").value = "";
+
+}
+
+
+// Load students when page opens
+loadStudents();
+
+</script>
+
+</body>
+</html>
